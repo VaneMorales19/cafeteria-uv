@@ -344,7 +344,7 @@ function App() {
       precioTotal: calculateTotal()
     };
 
-    console.log('✅ Producto con opciones:', productWithOptions);
+    console.log('Producto con opciones:', productWithOptions);
 
     onAdd(productWithOptions);
     onClose();
@@ -1503,6 +1503,12 @@ const handlePayment = async () => {
     imagen: '',
     opciones: []
   });
+  const [editingOptions, setEditingOptions] = useState([]);
+  const [currentOption, setCurrentOption] = useState({
+    nombre: '',
+    requerido: false,
+    opciones: [{ valor: '', precioExtra: 0 }]
+  });
 
  useEffect(() => {
   if (user?.rol === 'admin') {
@@ -1661,44 +1667,103 @@ const handlePayment = async () => {
   };
 
   const handleCreateProduct = async () => {
-    try {
-      if (!productForm.nombre || !productForm.precio || !productForm.categoria) {
-        alert('Nombre, precio y categoría son requeridos');
-        return;
-      }
-
-      const response = await fetch('http://localhost:5000/api/admin/products', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(productForm)
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        alert('Producto creado exitosamente');
-        setShowAddProduct(false);
-        setProductForm({
-          nombre: '',
-          descripcion: '',
-          precio: '',
-          categoria: 'desayunos',
-          stock: '',
-          imagen: '',
-          opciones: []
-        });
-        loadProducts();
-      } else {
-        alert(data.message || 'Error al crear producto');
-      }
-    } catch (error) {
-      console.error('Error creando producto:', error);
-      alert('Error al crear producto');
+  try {
+    if (!productForm.nombre || !productForm.precio || !productForm.categoria) {
+      alert('Nombre, precio y categoría son requeridos');
+      return;
     }
-  };
+
+    // INCLUIR LAS OPCIONES
+    const productData = {
+      ...productForm,
+      opciones: editingOptions // Agregar las opciones dinámicas
+    };
+
+    const response = await fetch('http://localhost:5000/api/admin/products', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+      body: JSON.stringify(productData)
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      alert('Producto creado exitosamente');
+      setShowAddProduct(false);
+      setProductForm({
+        nombre: '',
+        descripcion: '',
+        precio: '',
+        categoria: 'desayunos',
+        stock: '',
+        imagen: '',
+        opciones: []
+      });
+      setEditingOptions([]); // LIMPIAR OPCIONES
+      setCurrentOption({
+        nombre: '',
+        requerido: false,
+        opciones: [{ valor: '', precioExtra: 0 }]
+      });
+      loadProducts();
+    } else {
+      alert(data.message || 'Error al crear producto');
+    }
+  } catch (error) {
+    console.error('Error creando producto:', error);
+    alert('Error al crear producto');
+  }
+};
+
+  // ==================== FUNCIONES PARA GESTIONAR OPCIONES ====================
+
+const addOptionToProduct = () => {
+  if (!currentOption.nombre) {
+    alert('El nombre de la opción es requerido');
+    return;
+  }
+
+  if (currentOption.opciones.some(opt => !opt.valor)) {
+    alert('Todas las opciones deben tener un valor');
+    return;
+  }
+
+  setEditingOptions([...editingOptions, currentOption]);
+  setCurrentOption({
+    nombre: '',
+    requerido: false,
+    opciones: [{ valor: '', precioExtra: 0 }]
+  });
+};
+
+const addSubOption = () => {
+  setCurrentOption({
+    ...currentOption,
+    opciones: [...currentOption.opciones, { valor: '', precioExtra: 0 }]
+  });
+};
+
+const updateSubOption = (index, field, value) => {
+  const newOpciones = [...currentOption.opciones];
+  newOpciones[index][field] = value;
+  setCurrentOption({ ...currentOption, opciones: newOpciones });
+};
+
+const removeSubOption = (index) => {
+  if (currentOption.opciones.length === 1) {
+    alert('Debe haber al menos una opción');
+    return;
+  }
+  const newOpciones = currentOption.opciones.filter((_, i) => i !== index);
+  setCurrentOption({ ...currentOption, opciones: newOpciones });
+};
+
+const removeOption = (index) => {
+  setEditingOptions(editingOptions.filter((_, i) => i !== index));
+};
 
   const handleUpdateProduct = async () => {
     try {
@@ -2100,132 +2165,237 @@ const handlePayment = async () => {
               </div>
             )}
 
+            
             {/* Modal: Agregar Producto */}
-            {showAddProduct && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                  <div className="p-6">
-                    <div className="flex justify-between items-center mb-6">
-                      <h2 className="text-2xl font-bold text-gray-800">Agregar Nuevo Producto</h2>
-                      <button 
-                        onClick={() => {
-                          setShowAddProduct(false);
-                          setProductForm({
-                            nombre: '',
-                            descripcion: '',
-                            precio: '',
-                            categoria: 'desayunos',
-                            stock: '',
-                            imagen: '',
-                            opciones: []
-                          });
-                        }}
-                        className="text-gray-500 hover:text-gray-700">
-                        <X className="w-6 h-6" />
-                      </button>
-                    </div>
+{showAddProduct && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+    <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-gray-800">Agregar Nuevo Producto</h2>
+          <button 
+            onClick={() => {
+              setShowAddProduct(false);
+              setProductForm({
+                nombre: '', descripcion: '', precio: '', categoria: 'desayunos',
+                stock: '', imagen: '', opciones: []
+              });
+              setEditingOptions([]);
+            }}
+            className="text-gray-500 hover:text-gray-700">
+            <X className="w-6 h-6" />
+          </button>
+        </div>
 
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Nombre del Producto *
-                        </label>
-                        <input
-                          type="text"
-                          value={productForm.nombre}
-                          onChange={(e) => setProductForm({...productForm, nombre: e.target.value})}
-                          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                          placeholder="Ej: Chilaquiles Verdes"
-                        />
-                      </div>
+        <div className="space-y-4">
+          {/* Campos básicos existentes */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Nombre del Producto *</label>
+            <input
+              type="text"
+              value={productForm.nombre}
+              onChange={(e) => setProductForm({...productForm, nombre: e.target.value})}
+              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+              placeholder="Ej: Chilaquiles Verdes"
+            />
+          </div>
 
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Descripción
-                        </label>
-                        <textarea
-                          value={productForm.descripcion}
-                          onChange={(e) => setProductForm({...productForm, descripcion: e.target.value})}
-                          rows={3}
-                          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                          placeholder="Descripción del producto..."
-                        />
-                      </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
+            <textarea
+              value={productForm.descripcion}
+              onChange={(e) => setProductForm({...productForm, descripcion: e.target.value})}
+              rows={3}
+              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+              placeholder="Descripción del producto..."
+            />
+          </div>
 
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Precio *
-                          </label>
-                          <input
-                            type="number"
-                            step="0.01"
-                            value={productForm.precio}
-                            onChange={(e) => setProductForm({...productForm, precio: e.target.value})}
-                            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                            placeholder="0.00"
-                          />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Precio *</label>
+              <input
+                type="number"
+                step="0.01"
+                value={productForm.precio}
+                onChange={(e) => setProductForm({...productForm, precio: e.target.value})}
+                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                placeholder="0.00"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Stock Inicial</label>
+              <input
+                type="number"
+                value={productForm.stock}
+                onChange={(e) => setProductForm({...productForm, stock: e.target.value})}
+                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                placeholder="0"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Categoría *</label>
+            <select
+              value={productForm.categoria}
+              onChange={(e) => setProductForm({...productForm, categoria: e.target.value})}
+              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+              <option value="desayunos">Desayunos</option>
+              <option value="comidas">Comidas</option>
+              <option value="bebidas">Bebidas</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">URL de Imagen</label>
+            <input
+              type="text"
+              value={productForm.imagen}
+              onChange={(e) => setProductForm({...productForm, imagen: e.target.value})}
+              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+              placeholder="https://ejemplo.com/imagen.jpg"
+            />
+            {productForm.imagen && (
+              <img 
+                src={productForm.imagen} 
+                alt="Preview"
+                className="mt-2 w-32 h-32 object-cover rounded-lg"
+                onError={(e) => { e.target.style.display = 'none'; }}
+              />
+            )}
+          </div>
+          {/* ==================== SECCIÓN DE OPCIONES ==================== */}
+          <div className="border-t pt-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+              Opciones del Producto (Opcional)
+            </h3>
+
+            {/* Opciones ya agregadas */}
+            {editingOptions.length > 0 && (
+              <div className="mb-4 space-y-3">
+                <p className="text-sm font-medium text-gray-700">Opciones configuradas:</p>
+                {editingOptions.map((opt, idx) => (
+                  <div key={idx} className="bg-gray-50 p-4 rounded-lg">
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-800">
+                          {opt.nombre} 
+                          {opt.requerido && <span className="text-red-500 ml-1">*</span>}
+                        </p>
+                        <div className="mt-2 space-y-1">
+                          {opt.opciones.map((subOpt, subIdx) => (
+                            <p key={subIdx} className="text-sm text-gray-600">
+                              • {subOpt.valor} 
+                              {subOpt.precioExtra > 0 && (
+                                <span className="text-green-600"> (+${subOpt.precioExtra})</span>
+                              )}
+                            </p>
+                          ))}
                         </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Stock Inicial
-                          </label>
-                          <input
-                            type="number"
-                            value={productForm.stock}
-                            onChange={(e) => setProductForm({...productForm, stock: e.target.value})}
-                            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                            placeholder="0"
-                          />
-                        </div>
                       </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Categoría *
-                        </label>
-                        <select
-                          value={productForm.categoria}
-                          onChange={(e) => setProductForm({...productForm, categoria: e.target.value})}
-                          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
-                          <option value="desayunos">Desayunos</option>
-                          <option value="comidas">Comidas</option>
-                          <option value="bebidas">Bebidas</option>
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          URL de Imagen
-                        </label>
-                        <input
-                          type="text"
-                          value={productForm.imagen}
-                          onChange={(e) => setProductForm({...productForm, imagen: e.target.value})}
-                          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                          placeholder="https://ejemplo.com/imagen.jpg"
-                        />
-                        {productForm.imagen && (
-                          <img 
-                            src={productForm.imagen} 
-                            alt="Preview"
-                            className="mt-2 w-32 h-32 object-cover rounded-lg"
-                            onError={(e) => { e.target.style.display = 'none'; }}
-                          />
-                        )}
-                      </div>
-
                       <button
-                        onClick={handleCreateProduct}
-                        className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-semibold transition">
-                        Crear Producto
+                        onClick={() => removeOption(idx)}
+                        className="text-red-500 hover:text-red-700">
+                        <Trash2 className="w-5 h-5" />
                       </button>
                     </div>
                   </div>
-                </div>
+                ))}
               </div>
             )}
+
+            {/* Formulario para nueva opción */}
+            <div className="bg-blue-50 p-4 rounded-lg space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Nombre de la opción
+                  </label>
+                  <input
+                    type="text"
+                    value={currentOption.nombre}
+                    onChange={(e) => setCurrentOption({...currentOption, nombre: e.target.value})}
+                    className="w-full px-4 py-2 border rounded-lg"
+                    placeholder="Ej: Tipo, Tamaño, Salsa"
+                  />
+                </div>
+
+                <div className="flex items-center">
+                  <label className="flex items-center cursor-pointer mt-6">
+                    <input
+                      type="checkbox"
+                      checked={currentOption.requerido}
+                      onChange={(e) => setCurrentOption({...currentOption, requerido: e.target.checked})}
+                      className="mr-2"
+                    />
+                    <span className="text-sm font-medium text-gray-700">
+                      ¿Es requerida?
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Valores de la opción
+                </label>
+                {currentOption.opciones.map((subOpt, idx) => (
+                  <div key={idx} className="flex gap-2 mb-2">
+                    <input
+                      type="text"
+                      value={subOpt.valor}
+                      onChange={(e) => updateSubOption(idx, 'valor', e.target.value)}
+                      className="flex-1 px-4 py-2 border rounded-lg"
+                      placeholder="Ej: Pequeño, Grande"
+                    />
+                    <input
+                      type="number"
+                      value={subOpt.precioExtra}
+                      onChange={(e) => updateSubOption(idx, 'precioExtra', parseFloat(e.target.value) || 0)}
+                      className="w-32 px-4 py-2 border rounded-lg"
+                      placeholder="Precio extra"
+                    />
+                    {currentOption.opciones.length > 1 && (
+                      <button
+                        onClick={() => removeSubOption(idx)}
+                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg">
+                        <Minus className="w-5 h-5" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+
+                <button
+                  onClick={addSubOption}
+                  className="mt-2 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm flex items-center gap-2">
+                  <Plus className="w-4 h-4" />
+                  Agregar valor
+                </button>
+              </div>
+
+              <button
+                onClick={addOptionToProduct}
+                className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg font-semibold">
+                ✓ Guardar esta opción
+              </button>
+            </div>
+          </div>
+
+          {/* Botón crear producto */}
+          <button
+            onClick={handleCreateProduct}
+            className="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg font-semibold transition">
+            Crear Producto
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
+
+          
 
             {/* Modal: Editar Producto */}
             {editingProduct && (
@@ -2392,28 +2562,9 @@ const handlePayment = async () => {
           </div>
         )}
 
-        {/* Filtros */}
-        {!showReviews && (
-          <div className="bg-white rounded-xl shadow-md p-4 mb-6">
-            <div className="flex items-center space-x-2 overflow-x-auto">
-              {['todos', 'pendiente', 'preparando', 'listo', 'entregado'].map((status) => (
-                <button
-                  key={status}
-                  onClick={() => setFilterStatus(status)}
-                  className={`px-4 py-2 rounded-lg font-medium transition whitespace-nowrap ${
-                    filterStatus === status
-                      ? 'bg-orange-500 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}>
-                  {status.charAt(0).toUpperCase() + status.slice(1)}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* Lista de Pedidos */}
             {!showReviews && !showInventory && (
+              
              loading ? (
                <div className="text-center py-16">
                    <p className="text-gray-600">Cargando pedidos...</p>
@@ -2451,6 +2602,23 @@ const handlePayment = async () => {
                       <p className="text-2xl font-bold text-orange-500">${order.total}</p>
                     </div>
                   </div>
+                  {/* Filtros */}
+                  <div className="bg-white rounded-xl shadow-md p-4 mb-6">
+            <div className="flex items-center space-x-2 overflow-x-auto">
+              {['todos', 'pendiente', 'preparando', 'listo', 'entregado'].map((status) => (
+                <button
+                  key={status}
+                  onClick={() => setFilterStatus(status)}
+                  className={`px-4 py-2 rounded-lg font-medium transition whitespace-nowrap ${
+                    filterStatus === status
+                      ? 'bg-orange-500 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}>
+                  {status.charAt(0).toUpperCase() + status.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
 
             <div className="bg-gray-50 rounded-lg p-4 mb-4">
   <h4 className="font-semibold text-gray-800 mb-2">Productos:</h4>
