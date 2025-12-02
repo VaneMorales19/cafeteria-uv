@@ -1,4 +1,6 @@
-const API_URL = 'http://localhost:5000/api/orders';
+import config from '../config';
+
+const API_URL = `${config.API_URL}/orders`;
 
 export const orderService = {
   // Obtener mis pedidos

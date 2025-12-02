@@ -7,6 +7,7 @@ import QRCode from 'qrcode';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import io from 'socket.io-client';
+import config from './config';
 /* eslint-disable react-hooks/exhaustive-deps */
 
 function App() {
@@ -24,7 +25,7 @@ function App() {
   // Conectar Socket.IO cuando el usuario inicie sesión
   useEffect(() => {
     if (user && user._id) {
-      const newSocket = io('http://localhost:5000', {
+      const newSocket = io(config.API_URL.replace('/api', ''), {
         transports: ['websocket', 'polling']
       });
 
@@ -135,8 +136,9 @@ function App() {
       if (isRegistering) {
         // Registro
         const endpoint = userType === 'estudiante' 
-          ? 'http://localhost:5000/api/auth/register/estudiante'
-          : 'http://localhost:5000/api/auth/register/docente';
+       	? `${config.API_URL}/auth/register/estudiante`
+	: `${config.API_URL}/auth/register/docente`; 
+       
 
         const body = userType === 'estudiante'
           ? {
@@ -174,7 +176,7 @@ function App() {
         setCurrentView('menu');
       } else {
         // Login
-        const response = await fetch('http://localhost:5000/api/auth/login', {
+ 	const response = await fetch(`${config.API_URL}/auth/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -909,8 +911,8 @@ function App() {
 
   const loadPaymentMethods = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/users/payment-methods', {
-        headers: {
+      const response = await fetch(`${config.API_URL}/users/payment-methods`, {
+     	 headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
@@ -1403,7 +1405,7 @@ const handlePayment = async () => {
       try {
         setSubmitting(true);
         
-        const response = await fetch('http://localhost:5000/api/reviews', {
+       const response = await fetch(`${config.API_URL}/reviews`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -1529,7 +1531,7 @@ const handlePayment = async () => {
     setLoading(true);
     
     // Cargar estadísticas
-    const statsRes = await fetch('http://localhost:5000/api/admin/dashboard', {
+    const statsRes = await fetch(`${config.API_URL}/admin/dashboard`, {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('token')}`
       }
@@ -1539,7 +1541,7 @@ const handlePayment = async () => {
     setStats(statsData);
 
     // Cargar pedidos
-    let url = 'http://localhost:5000/api/admin/orders';
+    let url = `${config.API_URL}/admin/orders`;
     if (filterStatus !== 'todos') {
       url += `?estado=${filterStatus}`;
     }
@@ -1575,7 +1577,7 @@ const handlePayment = async () => {
 
   const loadReviews = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/reviews', {
+      const response = await fetch(`${config.API_URL}/reviews`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -1591,7 +1593,7 @@ const handlePayment = async () => {
     try {
       console.log('Actualizando pedido:', orderId, 'a estado:', newStatus);
       
-      const response = await fetch(`http://localhost:5000/api/admin/orders/${orderId}/status`, {
+      const response = await fetch(`${config.API_URL}/admin/orders/${orderId}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -1655,7 +1657,7 @@ const filteredOrders = React.useMemo(() => {
   const loadProducts = async () => {
     try {
       setLoading(true);
-      let url = 'http://localhost:5000/api/admin/products?';
+      let url = `${config.API_URL}/admin/products?`;
       
       const params = new URLSearchParams();
       if (searchTerm) params.append('search', searchTerm);
@@ -1692,7 +1694,7 @@ const filteredOrders = React.useMemo(() => {
       opciones: editingOptions // Agregar las opciones dinámicas
     };
 
-    const response = await fetch('http://localhost:5000/api/admin/products', {
+    const response = await fetch(`${config.API_URL}/admin/products`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -1780,7 +1782,7 @@ const removeOption = (index) => {
 
   const handleUpdateProduct = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/admin/products/${editingProduct._id}`, {
+      const response = await fetch(`${config.API_URL}/admin/products/${editingProduct._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -1815,7 +1817,7 @@ const removeOption = (index) => {
 
   const handleUpdateStock = async (productId, operacion, cantidad) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/admin/products/${productId}/stock`, {
+      const response = await fetch(`${config.API_URL}/admin/products/${productId}/stock`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -1840,7 +1842,7 @@ const removeOption = (index) => {
     }
 
     try {
-      const response = await fetch(`http://localhost:5000/api/admin/products/${productId}`, {
+      const response = await fetch(`${config.API_URL}/admin/products/${productId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -2867,7 +2869,7 @@ const ProfileView = () => {
 
   const updateProfile = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/users/profile', {
+      const response = await fetch(`${config.API_URL}/users/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -2897,7 +2899,7 @@ const ProfileView = () => {
     console.log('Cargando métodos de pago...');
     console.log('Token:', localStorage.getItem('token') ? 'Existe' : 'No existe');
     
-    const response = await fetch('http://localhost:5000/api/users/payment-methods', {
+    const response = await fetch(`${config.API_URL}/users/payment-methods`, {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('token')}`
       }
@@ -2923,7 +2925,7 @@ const addPaymentMethod = async () => {
   try {
     console.log('Intentando agregar tarjeta:', newCard);
     
-    const response = await fetch('http://localhost:5000/api/users/payment-methods', {
+    const response = await fetch(`${config.API_URL}/users/payment-methods`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -2955,7 +2957,7 @@ const addPaymentMethod = async () => {
     if (!window.confirm('¿Eliminar esta tarjeta?')) return;
 
     try {
-      const response = await fetch(`http://localhost:5000/api/users/payment-methods/${id}`, {
+      const response = await fetch(`${config.API_URL}/users/payment-methods/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
