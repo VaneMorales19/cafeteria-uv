@@ -906,9 +906,15 @@ function App() {
   const [useNewCard, setUseNewCard] = useState(false);
 
   useEffect(() => {
-    loadPaymentMethods();
-  }, []);
+  loadPaymentMethods();
+}, []);
 
+useEffect(() => {
+  // Si no hay métodos de pago guardados, activar automáticamente el modo "nueva tarjeta"
+  if (paymentMethods.length === 0) {
+    setUseNewCard(true);
+  }
+}, [paymentMethods]);
   const loadPaymentMethods = async () => {
     try {
       const response = await fetch(`${config.API_URL}/users/payment-methods`, {
@@ -1144,11 +1150,16 @@ const handlePayment = async () => {
   const ConfirmationView = () => {
   const [qrCodeUrl, setQrCodeUrl] = useState('');
 
-  // Función para calcular el total de cada item
-  const calculateItemTotal = (item) => {
-    return item.precio * item.cantidad;
-  };
-
+ // Función para calcular el total de cada item
+const calculateItemTotal = (item) => {
+  let total = item.precio * item.cantidad;
+  if (item.opcionesSeleccionadas) {
+    item.opcionesSeleccionadas.forEach(opt => {
+      total += (opt.precioExtra || 0) * item.cantidad;
+    });
+  }
+  return total;
+};
   // Calcular el total del pedido
   const total = cart.reduce((sum, item) => sum + calculateItemTotal(item), 0);
 
