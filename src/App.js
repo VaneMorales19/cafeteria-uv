@@ -1091,7 +1091,7 @@ const handlePayment = async () => {
                     setPaymentData({ cardNumber: '', cardName: '', expiry: '', cvv: '' });
                   }}
                   className="text-orange-500 hover:text-orange-600 font-medium mb-4">
-                  ← Usar tarjeta guardada
+                   Usar tarjeta guardada
                 </button>
               )}
 
@@ -1115,7 +1115,15 @@ const handlePayment = async () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Fecha de Expiración</label>
                   <input type="text" maxLength={5} value={paymentData.expiry}
-                    onChange={(e) => setPaymentData({...paymentData, expiry: e.target.value})}
+                    onChange={(e) => {
+                      let value = e.target.value.replace(/\D/g, ''); // Solo números
+    
+                       if (value.length >= 2) {
+                         value = value.slice(0, 2) + '/' + value.slice(2, 4);
+                      }
+    
+                      setPaymentData({...paymentData, expiry: value});
+                     }}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                     placeholder="MM/AA" />
                 </div>
