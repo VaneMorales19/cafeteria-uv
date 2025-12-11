@@ -104,7 +104,7 @@ function App() {
       loadProducts();
     }
   }, []);
-
+//cargar productos
   const loadProducts = async () => {
     try {
       setLoading(true);
@@ -117,7 +117,7 @@ function App() {
       setLoading(false);
     }
   };
-
+//carga de usuarios
   const LoginView = () => {
   const [isRegistering, setIsRegistering] = useState(false);
   const [userType, setUserType] = useState('estudiante'); // 'estudiante' o 'docente'
@@ -274,7 +274,7 @@ function App() {
                 <input type="email" value={formData.correo}
                   onChange={(e) => setFormData({...formData, correo: e.target.value})}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  placeholder="usuario@uv.mx" />
+                  placeholder="usuario@estudiantes.uv.mx" />
               </div>
             </>
           )}
@@ -302,7 +302,7 @@ function App() {
     </div>
   );
 };
-
+//opciones de producto
   const ProductOptionsModal = ({ product, onClose, onAdd }) => {
   const [selectedOptions, setSelectedOptions] = useState({});
   const [comments, setComments] = useState('');
@@ -314,7 +314,7 @@ function App() {
       [optionName]: { valor: value, precioExtra }
     });
   };
-
+//calcular total
   const calculateTotal = () => {
     let total = product.precio * quantity;
     Object.values(selectedOptions).forEach(opt => {
@@ -322,7 +322,7 @@ function App() {
     });
     return total;
   };
-
+//selccionar una opcion
   const handleAdd = () => {
     const requiredOptions = product.opciones?.filter(opt => opt.requerido) || [];
     const missingOptions = requiredOptions.filter(
@@ -519,7 +519,7 @@ function App() {
 
     return filtered;
   };
-
+//filtrar productos
   const filteredProducts = getFilteredProducts();
 
   return (
@@ -750,7 +750,7 @@ function App() {
     </div>
   );
 };
-
+//calculo del total
   const CartView = () => {
     const [orderNotes, setOrderNotes] = useState('');
 
@@ -896,7 +896,7 @@ function App() {
       </div>
     );
   };
-
+//metodo de pago
   const PaymentView = () => {
   const [paymentData, setPaymentData] = useState({
     cardNumber: '', cardName: '', expiry: '', cvv: ''
@@ -1200,7 +1200,7 @@ const calculateItemTotal = (item) => {
     generateQR();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
+// Generar pdf
   const downloadPDF = () => {
     const doc = new jsPDF();
     
@@ -1409,7 +1409,7 @@ const calculateItemTotal = (item) => {
     </div>
   );
   };
-
+//Reseñas
   const ReviewView = () => {
     const [rating, setRating] = useState(0);
     const [review, setReview] = useState('');
@@ -1500,6 +1500,7 @@ const calculateItemTotal = (item) => {
       </div>
     );
   };
+  //administrador
   const AdminDashboard = () => {
   const [orders, setOrders] = useState([]);
   const [stats, setStats] = useState({});
@@ -1593,7 +1594,7 @@ const calculateItemTotal = (item) => {
     setLoading(false);
   }
 };
-
+//vizualizar reseñas
   const loadReviews = async () => {
     try {
       const response = await fetch(`${config.API_URL}/reviews`, {
@@ -1607,7 +1608,7 @@ const calculateItemTotal = (item) => {
       console.error('Error cargando reseñas:', error);
     }
   };
-
+//estado del pedido
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
       console.log('Actualizando pedido:', orderId, 'a estado:', newStatus);
@@ -1639,6 +1640,7 @@ const calculateItemTotal = (item) => {
     }
   };
 
+//asignar un color al estautus del pedido
   const getStatusColor = (status) => {
     const colors = {
       'pendiente': 'bg-yellow-100 text-yellow-800',
@@ -1660,7 +1662,7 @@ const calculateItemTotal = (item) => {
     default: return;
   }
 };
-
+//filtrar pedidos
 const filteredOrders = React.useMemo(() => {
   if (!Array.isArray(orders)) {
     console.error('orders no es un array:', orders);
@@ -1699,7 +1701,7 @@ const filteredOrders = React.useMemo(() => {
       setLoading(false);
     }
   };
-
+//crear un producto
   const handleCreateProduct = async () => {
   try {
     if (!productForm.nombre || !productForm.precio || !productForm.categoria) {
@@ -1752,7 +1754,7 @@ const filteredOrders = React.useMemo(() => {
   }
 };
 
-  // ==================== FUNCIONES PARA GESTIONAR OPCIONES ====================
+  //FUNCIONES PARA GESTIONAR OPCIONES
 
 const addOptionToProduct = () => {
   if (!currentOption.nombre) {
@@ -1772,20 +1774,20 @@ const addOptionToProduct = () => {
     opciones: [{ valor: '', precioExtra: 0 }]
   });
 };
-
+//precio extra de opciones
 const addSubOption = () => {
   setCurrentOption({
     ...currentOption,
     opciones: [...currentOption.opciones, { valor: '', precioExtra: 0 }]
   });
 };
-
+//nuevas opciones
 const updateSubOption = (index, field, value) => {
   const newOpciones = [...currentOption.opciones];
   newOpciones[index][field] = value;
   setCurrentOption({ ...currentOption, opciones: newOpciones });
 };
-
+//tener al menos una opcion
 const removeSubOption = (index) => {
   if (currentOption.opciones.length === 1) {
     alert('Debe haber al menos una opción');
@@ -1798,7 +1800,7 @@ const removeSubOption = (index) => {
 const removeOption = (index) => {
   setEditingOptions(editingOptions.filter((_, i) => i !== index));
 };
-
+//actualizar producto
   const handleUpdateProduct = async () => {
     try {
       const response = await fetch(`${config.API_URL}/admin/products/${editingProduct._id}`, {
@@ -1833,7 +1835,7 @@ const removeOption = (index) => {
       alert('Error al actualizar producto');
     }
   };
-
+//actualizacion de stock
   const handleUpdateStock = async (productId, operacion, cantidad) => {
     try {
       const response = await fetch(`${config.API_URL}/admin/products/${productId}/stock`, {
@@ -1854,7 +1856,7 @@ const removeOption = (index) => {
       console.error('Error actualizando stock:', error);
     }
   };
-
+//eliminar producto
   const handleDeleteProduct = async (productId, productName) => {
     if (!window.confirm(`¿Estás seguro de eliminar "${productName}"?`)) {
       return;
@@ -1879,7 +1881,7 @@ const removeOption = (index) => {
       alert('Error al eliminar producto');
     }
   };
-
+//editar opciones de producto
   const openEditProduct = (product) => {
     setEditingProduct(product);
     setProductForm({
@@ -2755,6 +2757,8 @@ const removeOption = (index) => {
     </div>
   );
 };
+
+//visualizar ordenes
 const OrderHistoryView = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -2762,7 +2766,7 @@ const OrderHistoryView = () => {
   useEffect(() => {
     loadOrders();
   }, []);
-
+// cargar ordenes
   const loadOrders = async () => {
     try {
       const data = await orderService.getMyOrders();
@@ -2773,7 +2777,7 @@ const OrderHistoryView = () => {
       setLoading(false);
     }
   };
-
+//estado del pedido
   const getStatusBadge = (status) => {
     const badges = {
       'pendiente': 'bg-yellow-100 text-yellow-800',
@@ -2868,6 +2872,7 @@ const OrderHistoryView = () => {
     </div>
   );
   };
+  //Visualizacion del perfil
 const ProfileView = () => {
   const [paymentMethods, setPaymentMethods] = useState([]);
   const [showAddCard, setShowAddCard] = useState(false);
@@ -2885,7 +2890,7 @@ const ProfileView = () => {
   useEffect(() => {
     loadPaymentMethods();
   }, []);
-
+//actualizacion del perfil
   const updateProfile = async () => {
     try {
       const response = await fetch(`${config.API_URL}/users/profile`, {
@@ -2913,6 +2918,7 @@ const ProfileView = () => {
     }
   };
 
+//cargar metodo de pago
   const loadPaymentMethods = async () => {
   try {
     console.log('Cargando métodos de pago...');
@@ -2934,7 +2940,7 @@ const ProfileView = () => {
     console.error('Error cargando métodos de pago:', error);
   }
 };
-
+//añadir nuevo metodo de pago
 const addPaymentMethod = async () => {
   if (!newCard.cardNumber || !newCard.cardName || !newCard.expiry) {
     alert('Por favor completa todos los campos');
@@ -2971,7 +2977,7 @@ const addPaymentMethod = async () => {
     alert('Error al agregar tarjeta');
   }
 };
-
+//eliminar metodo de pago
   const deletePaymentMethod = async (id) => {
     if (!window.confirm('¿Eliminar esta tarjeta?')) return;
 
